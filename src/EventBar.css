@@ -1,0 +1,5 @@
+.eventBar {
+    padding: .25em 0 .5em .75em;
+    border-left: 6px solid #3498db;
+    border-bottom: 1px solid #ccc;
+}

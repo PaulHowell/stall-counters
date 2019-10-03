@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "stall-counter",
+    "develop": "stall-counter-dev"
+  }
+}
