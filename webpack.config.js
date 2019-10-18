@@ -57,8 +57,8 @@ let config = {
 			chunks: ['stall_list']
 		}),
 		new HtmlWebpackPlugin({
-			template: pub + '/uts1-12_mayFes2019/index.html',
-			filename: 'uts1-12_mayFes2019/index.html',
+			template: pub + '/stalls/uts1-12_mayFes2019/index.html',
+			filename: 'stalls/uts1-12_mayFes2019/index.html',
 			chunks: ['stall_disp']
 		}),
 		new HtmlWebpackPlugin({

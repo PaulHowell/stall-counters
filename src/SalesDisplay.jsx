@@ -117,5 +117,5 @@ class SalesDisplay extends React.Component {
 	}
 }
 
-render(<SalesDisplay stallId={location.pathname.split('/')[1]}/>,   //htmlのディレクトリからidを取得
+render(<SalesDisplay stallId={location.pathname.split('/')[2]}/>,   //htmlのディレクトリからidを取得
 	document.getElementById("sales_disp"));
