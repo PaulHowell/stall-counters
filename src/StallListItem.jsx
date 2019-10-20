@@ -21,7 +21,7 @@ const BtnFlatStripe = styled.div`
 
 function StallListItem(props) {
 
-	let linkUrl = "/stall_menu.html?id="+props.stallId+"&name="+props.stall.name+"-"+props.event.name;
+	let linkUrl = "/stalls/"+props.stallId+"/index.html";
 
 	let colorMain = props.stall.color_main;
 	let colorLighter = props.stall.color_lighter;

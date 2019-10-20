@@ -6,6 +6,7 @@ import {ErrLoading, Loading} from "./Loading";
 import fbinitAnd from "./fbinit";
 import styles from "./SalesDisplay.css"
 
+//日にちだけ比較して、同じかどうかを返す
 Date.prototype.eqDateOnly = function(other){
 	//TODO 型チェックとタイムゾーンチェック(必要かなあ)
 	return this.getFullYear()===other.getFullYear() &&
@@ -19,7 +20,7 @@ class SalesDisplay extends React.Component {
 		this.state = {
 			loading: true,
 			error: null,
-			id: null,
+			id: props.stallId,
 			ref: null,
 			menu: null,
 			today: null,
@@ -32,41 +33,27 @@ class SalesDisplay extends React.Component {
 	}
 
 	componentDidMount() {
-		//urlのパラメータでstallのidが渡される
-		let urlParamStr = window.location.search;
-		if (!urlParamStr) {
-			this.setState({ loading: false, error:"parameters not found." })
-		}else {
-			urlParamStr = urlParamStr.substring(1);
-			let params = {};
-			urlParamStr.split('&').forEach(p => {
-				let a = p.split('=');
-				params[a[0]] = a[1];
-			});
-			document.title = `メニュー|${params.name}`;
-			this.setState({id: params.id});
-			try {
-				fbinitAnd(() => {
-					//firestoreからデータを引っ張ってくる。
-					let doc = firebase.firestore().collection("stalls").doc(params.id);
-					doc.get().then(response => {
-						if(!response.exists) throw "Invalid id specified.";
-						this.loadData(response);
-						this.setState({ ref: doc, loading: false })
-					});
+		try {
+			fbinitAnd(() => {
+				//firestoreからデータを引っ張ってくる。
+				let doc = firebase.firestore().collection("stalls").doc(this.state.id);
+				doc.get().then(response => {
+					if(!response.exists) throw "Invalid id specified.";
+					this.loadData(response);
+					this.setState({ ref: doc, loading: false })
 				});
-			} catch(error) {
-				console.log(error);
-				this.setState({loading: false, error: error});
-			}
+			});
+		} catch(error) {
+			console.log(error);
+			this.setState({ loading: false, error: error });
 		}
 	}
 
 	//onSnapshotのオンオフ切り替え
 	//チェックボックスのonChangeイベントで呼び出される
 	toggleAuto(){
-		let checkbox = document.getElementById("chkBoxAuto");
-		if (checkbox && checkbox.checked){
+		let checkbox = document.getElementById("chkBoxAuto");   //undefinedの場合もある
+		if (checkbox && checkbox.checked){  //自動更新オンモード
 			let unsubscribe = this.state.ref.onSnapshot(
 				snapshot=>this.loadData(snapshot),
 				error => {
@@ -76,7 +63,7 @@ class SalesDisplay extends React.Component {
 			this.setState({ autoUnsbsc: unsubscribe });
 		}else{
 			let unsubscribe = this.state.autoUnsbsc;
-			if (unsubscribe && !this.state.error) unsubscribe()
+			if (unsubscribe && !this.state.error) unsubscribe() //自動更新ストップ
 		}
 	}
 
@@ -130,4 +117,5 @@ class SalesDisplay extends React.Component {
 	}
 }
 
-render(<SalesDisplay />, document.getElementById("sales_disp"));
+render(<SalesDisplay stallId={location.pathname.split('/')[2]}/>,   //htmlのディレクトリからidを取得
+	document.getElementById("sales_disp"));

@@ -12,7 +12,7 @@ const pub = path.resolve(__dirname, 'public');
 let config = {
 	entry: {
 		stall_list: src + '/StallList.jsx',
-		stall_menu: src + '/SalesDisplay.jsx'
+		stall_disp: src + '/SalesDisplay.jsx'
 	},
 
 	output: {
@@ -57,9 +57,9 @@ let config = {
 			chunks: ['stall_list']
 		}),
 		new HtmlWebpackPlugin({
-			template: pub + '/stall_menu.html',
-			filename: 'stall_menu.html',
-			chunks: ['stall_menu']
+			template: pub + '/stalls/uts1-12_mayFes2019/index.html',
+			filename: 'stalls/uts1-12_mayFes2019/index.html',
+			chunks: ['stall_disp']
 		}),
 		new HtmlWebpackPlugin({
 			template: pub + '/404.html',
