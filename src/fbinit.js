@@ -5,7 +5,7 @@ function fbinitAnd(func){
 		fetch('/__/firebase/init.json').then(async response => {
 			firebase.initializeApp(await response.json());
 			func();
-		}).catch( (error) => {
+		}).catch( error => {
 			throw error;
 		});
 	} else {

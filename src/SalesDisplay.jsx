@@ -1,6 +1,7 @@
 import React from 'react';
 import {render} from 'react-dom';
 import * as firebase from "firebase/app";
+import "firebase/auth";
 import "firebase/firestore";
 import {ErrLoading, Loading} from "./Loading";
 import fbinitAnd from "./fbinit";
@@ -19,8 +20,8 @@ class SalesDisplay extends React.Component {
 		super(props);
 		this.state = {
 			loading: true,
-			error: null,
-			id: props.stallId,
+			error: [],
+			stallId: props.stallId,
 			ref: null,
 			menu: null,
 			today: null,
@@ -35,17 +36,22 @@ class SalesDisplay extends React.Component {
 	componentDidMount() {
 		try {
 			fbinitAnd(() => {
+				firebase.auth().signInAnonymously().catch(err => {
+					this.setState({error: this.state.error.concat(err)});
+				});
 				//firestoreからデータを引っ張ってくる。
-				let doc = firebase.firestore().collection("stalls").doc(this.state.id);
+				let doc = firebase.firestore().collection("stalls").doc(this.state.stallId);
 				doc.get().then(response => {
-					if(!response.exists) throw "Invalid id specified.";
+					if(!response.exists) throw new Error("invalid id specified.");
 					this.loadData(response);
-					this.setState({ ref: doc, loading: false })
+					this.setState({ ref: doc, loading: false });
+				}).catch(err => {
+					this.setState({ error: this.state.error.concat(err) });
 				});
 			});
-		} catch(error) {
-			console.log(error);
-			this.setState({ loading: false, error: error });
+		} catch(err) {
+			console.log(err);
+			this.setState({ loading: false, error: this.state.error.concat(err) });
 		}
 	}
 
@@ -56,9 +62,9 @@ class SalesDisplay extends React.Component {
 		if (checkbox && checkbox.checked){  //自動更新オンモード
 			let unsubscribe = this.state.ref.onSnapshot(
 				snapshot=>this.loadData(snapshot),
-				error => {
-					console.log(error);
-					this.setState({ error: error })
+				err => {
+					console.log(err);
+					this.setState({ error: this.state.error.concat(err) })
 				});
 			this.setState({ autoUnsbsc: unsubscribe });
 		}else{
@@ -85,7 +91,7 @@ class SalesDisplay extends React.Component {
 	}
 
 	render() {
-		if (this.state.error) {
+		if (this.state.error.length) {
 			return <ErrLoading error={this.state.error} />;
 		} else if (this.state.loading) {
 			return <Loading/>;

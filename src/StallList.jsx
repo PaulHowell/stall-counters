@@ -35,7 +35,7 @@ class StallList extends React.Component{
 			loading: true,
 			events: null,
 			stalls: null,
-			error: false
+			error: []
 		}
 	}
 
@@ -59,13 +59,12 @@ class StallList extends React.Component{
 				stalls: response[1].docs
 			})
 		}).catch((error) => {
-			console.log(error);
-			this.setState({ loading:false, error:true });
+			this.setState({ loading:false, error:this.state.error.concat(error) });
 		});
 	}
 
 	render() {
-		if (this.state.error) {
+		if (this.state.error.length) {
 			return <ErrLoading/>;
 		} else if (this.state.loading) {
 			return <Loading/>;
