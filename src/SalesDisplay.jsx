@@ -45,13 +45,10 @@ class SalesDisplay extends React.Component {
 					if(!response.exists) throw new Error("invalid id specified.");
 					this.loadData(response);
 					this.setState({ ref: doc, loading: false });
-				}).catch(err => {
-					this.setState({ error: this.state.error.concat(err) });
-				});
+				}).catch(err => this.loadingError(err));
 			});
 		} catch(err) {
-			console.log(err);
-			this.setState({ loading: false, error: this.state.error.concat(err) });
+			this.loadingError(err);
 		}
 	}
 
@@ -62,14 +59,11 @@ class SalesDisplay extends React.Component {
 		if (checkbox && checkbox.checked){  //自動更新オンモード
 			let unsubscribe = this.state.ref.onSnapshot(
 				snapshot=>this.loadData(snapshot),
-				err => {
-					console.log(err);
-					this.setState({ error: this.state.error.concat(err) })
-				});
+				err => this.loadingError(err));
 			this.setState({ autoUnsbsc: unsubscribe });
 		}else{
 			let unsubscribe = this.state.autoUnsbsc;
-			if (unsubscribe && !this.state.error) unsubscribe() //自動更新ストップ
+			if (unsubscribe && !this.state.error.length) unsubscribe() //自動更新ストップ
 		}
 	}
 
@@ -78,7 +72,19 @@ class SalesDisplay extends React.Component {
 		let menu = docSS.get("menu");
 		let sales = docSS.get("sales");
 		if (!sales.today.toDate().eqDateOnly(new Date())){
-			//TODO today関連の更新(GASでやるのもアリ)
+			//today関連の更新
+			let yenToday = {};
+			let cntToday = {};
+			Object.keys(sales.yenToday).forEach(key => {
+				yenToday[key] = 0;
+				cntToday[key] = 0;
+			});
+			docSS.ref.update({
+				today: new Date(),
+				yenToday: yenToday,
+				cntToday: cntToday,
+			}).then(() => this.loadData())
+				.catch(error => this.loadingError(error));
 		}
 		this.setState({
 			today: sales.today.toDate(),
@@ -121,6 +127,12 @@ class SalesDisplay extends React.Component {
 			</fieldset>)
 		}
 	}
+
+	loadingError(error) {
+		console.log(error);
+		this.setState({ loading: false, error: this.state.error.concat(error) });
+	}
+
 }
 
 render(<SalesDisplay stallId={location.pathname.split('/')[2]}/>,   //htmlのディレクトリからidを取得

@@ -8,10 +8,10 @@ function ErrLoading(props) {
 		contents.push(<ul>
 			{props.error.map(err => {
 				if (typeof err != "string") {
-					if (err.code) return <li>{err.code}: {err.message}</li>;
-					else return <li>{err.message}</li>;
+					if (err.code) return <li key={err.message}>{err.code}: {err.message}</li>;
+					else return <li key={err.message}>{err.message}</li>;
 				}
-				else return <li>{err}</li>
+				else return <li key={err}>{err}</li>
 			})}
 		</ul>)
 	}
