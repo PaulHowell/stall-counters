@@ -5,15 +5,11 @@ import "firebase/auth";
 import "firebase/firestore";
 import {ErrLoading, Loading} from "./Loading";
 import fbinitAnd from "./fbinit";
+import * as moment from "moment-timezone";
 import styles from "./SalesDisplay.css"
 
-//日にちだけ比較して、同じかどうかを返す
-Date.prototype.eqDateOnly = function(other){
-	//TODO 型チェックとタイムゾーンチェック(必要かなあ)
-	return this.getFullYear()===other.getFullYear() &&
-		this.getMonth()===other.getMonth() &&
-		this.getDate()===other.getDate()
-};
+moment.locale('ja-JP');
+const tokyo = 'Asia/Tokyo';
 
 class SalesDisplay extends React.Component {
 	constructor(props){
@@ -36,15 +32,14 @@ class SalesDisplay extends React.Component {
 	componentDidMount() {
 		try {
 			fbinitAnd(() => {
-				firebase.auth().signInAnonymously().catch(err => {
-					this.setState({error: this.state.error.concat(err)});
-				});
-				//firestoreからデータを引っ張ってくる。
-				let doc = firebase.firestore().collection("stalls").doc(this.state.stallId);
-				doc.get().then(response => {
+				firebase.auth().signInAnonymously().then(() => {
+					//firestoreからデータを引っ張ってくる。
+					let doc = firebase.firestore().collection("stalls").doc(this.state.stallId);
+					return doc.get();
+				}).then(response => {
 					if(!response.exists) throw new Error("invalid id specified.");
 					this.loadData(response);
-					this.setState({ ref: doc, loading: false });
+					this.setState({ ref: response.ref, loading: false });
 				}).catch(err => this.loadingError(err));
 			});
 		} catch(err) {
@@ -71,7 +66,7 @@ class SalesDisplay extends React.Component {
 	loadData(docSS) {
 		let menu = docSS.get("menu");
 		let sales = docSS.get("sales");
-		if (!sales.today.toDate().eqDateOnly(new Date())){
+		if (!moment(sales.today.toDate()).tz(tokyo).isSame(moment(), 'day')){
 			//today関連の更新
 			let yenToday = {};
 			let cntToday = {};
@@ -79,15 +74,15 @@ class SalesDisplay extends React.Component {
 				yenToday[key] = 0;
 				cntToday[key] = 0;
 			});
-			docSS.ref.update({
-				today: new Date(),
+			docSS.ref.update({  //FIXME これが何故かpermission deniedになる
+				today: firebase.firestore.FieldValue.serverTimestamp(),
 				yenToday: yenToday,
 				cntToday: cntToday,
-			}).then(() => this.loadData())
+			}).then(() => this.loadData())  //非同期で更新したあとまた呼び出す
 				.catch(error => this.loadingError(error));
 		}
 		this.setState({
-			today: sales.today.toDate(),
+			today: moment(sales.today.toDate()),
 			menu: menu,
 			salesYenTot: sales.yenTot,
 			salesYenToday: sales.yenToday,
@@ -107,7 +102,7 @@ class SalesDisplay extends React.Component {
 				<legend>売上</legend>
 				<label><input id="chkBoxAuto" type="checkbox" onChange={this.toggleAuto()}/>自動更新</label>
 				<section>
-					<h3>今日({this.state.today.toLocaleDateString('ja-JP')}): &yen;{this.state.salesYenToday} </h3>
+					<h3>今日({this.state.today.format('l')}): &yen;{this.state.salesYenToday} </h3>
 					<details>
 						<summary>詳細</summary>
 						{Object.keys(this.state.salesCntToday).map(key =>

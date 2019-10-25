@@ -6,7 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode=development",
-    "build:prd": "webpack --mode=production"
+    "build:prd": "webpack --mode=production",
+    "deploy": "firebase deploy --only functions,hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "deploy:all": "firebase deploy"
   },
   "author": "keikun2000",
   "devDependencies": {
@@ -20,8 +23,11 @@
     "css-loader": "^3.2.0",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^3.2.0",
+    "moment-locales-webpack-plugin": "^1.1.0",
     "style-loader": "^1.0.0",
     "terser-webpack-plugin": "^2.1.3",
+    "ts-loader": "^6.2.0",
+    "typescript": "^3.6.4",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9"
   },
@@ -31,6 +37,7 @@
     "@fortawesome/react-fontawesome": "^0.1.7",
     "basic-auth": "^2.0.1",
     "firebase": "^6.6.2",
+    "moment-timezone": "^0.5.27",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "react-scripts": "^3.2.0",

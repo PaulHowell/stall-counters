@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const MomentLocalesPlugin = require('moment-locales-webpack-plugin');
 
 const src  = path.resolve(__dirname, 'src');
 const build = path.resolve(__dirname, 'functions/static');
@@ -25,6 +26,10 @@ let config = {
 	module: {
 		rules: [
 			{
+				test: /\.ts$/,
+				loader: 'ts-loader'
+			},
+			{
 				test: /\.jsx$/,
 				exclude: /node_modules/,
 				loader: 'babel-loader'
@@ -41,7 +46,7 @@ let config = {
 	},
 
 	resolve: {
-		extensions: ['.js', '.jsx']
+		extensions: ['.js', '.jsx', '.ts']
 	},
 
 	plugins: [
@@ -69,6 +74,9 @@ let config = {
 		new CopyPlugin([
 			{ from: pub + '/img', to: 'img' },
 		]),
+		new MomentLocalesPlugin({
+			localesToKeep: ['en', 'ja-JP'],
+		}),
 	]
 };
 
