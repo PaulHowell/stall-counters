@@ -58,7 +58,10 @@ class SalesDisplay extends React.Component {
 			this.setState({ autoUnsbsc: unsubscribe });
 		}else{
 			let unsubscribe = this.state.autoUnsbsc;
-			if (unsubscribe && !this.state.error.length) unsubscribe() //自動更新ストップ
+			if (unsubscribe && !this.state.error.length) { //自動更新ストップ
+				unsubscribe();
+				this.setState({ autoUnsbsc: null });
+			}
 		}
 	}
 
@@ -68,17 +71,18 @@ class SalesDisplay extends React.Component {
 		let sales = docSS.get("sales");
 		if (!moment(sales.today.toDate()).tz(tokyo).isSame(moment(), 'day')){
 			//today関連の更新
-			let yenToday = {};
 			let cntToday = {};
-			Object.keys(sales.yenToday).forEach(key => {
-				yenToday[key] = 0;
+			Object.keys(sales.cntToday).forEach(key => {
 				cntToday[key] = 0;
 			});
-			docSS.ref.update({  //FIXME これが何故かpermission deniedになる
+			docSS.ref.update("sales", {
 				today: firebase.firestore.FieldValue.serverTimestamp(),
-				yenToday: yenToday,
+				yenToday: 0,
 				cntToday: cntToday,
-			}).then(() => this.loadData())  //非同期で更新したあとまた呼び出す
+				yenTot: sales.yenTot,
+				cntTot: sales.cntTot,
+			}).then(() => docSS.ref.get())
+				.then(res => this.loadData(res))  //非同期で更新したあとまた呼び出す
 				.catch(error => this.loadingError(error));
 		}
 		this.setState({
@@ -100,7 +104,7 @@ class SalesDisplay extends React.Component {
 			//TODO 表示
 			return (<fieldset>
 				<legend>売上</legend>
-				<label><input id="chkBoxAuto" type="checkbox" onChange={this.toggleAuto()}/>自動更新</label>
+				<label><input id="chkBoxAuto" type="checkbox" onChange={this.toggleAuto.bind(this)}/>自動更新</label>
 				<section>
 					<h3>今日({this.state.today.format('l')}): &yen;{this.state.salesYenToday} </h3>
 					<details>
