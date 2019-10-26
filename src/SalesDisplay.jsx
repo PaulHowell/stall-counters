@@ -5,15 +5,11 @@ import "firebase/auth";
 import "firebase/firestore";
 import {ErrLoading, Loading} from "./Loading";
 import fbinitAnd from "./fbinit";
+import * as moment from "moment-timezone";
 import styles from "./SalesDisplay.css"
 
-//日にちだけ比較して、同じかどうかを返す
-Date.prototype.eqDateOnly = function(other){
-	//TODO 型チェックとタイムゾーンチェック(必要かなあ)
-	return this.getFullYear()===other.getFullYear() &&
-		this.getMonth()===other.getMonth() &&
-		this.getDate()===other.getDate()
-};
+moment.locale('ja-JP');
+const tokyo = 'Asia/Tokyo';
 
 class SalesDisplay extends React.Component {
 	constructor(props){
@@ -36,22 +32,18 @@ class SalesDisplay extends React.Component {
 	componentDidMount() {
 		try {
 			fbinitAnd(() => {
-				firebase.auth().signInAnonymously().catch(err => {
-					this.setState({error: this.state.error.concat(err)});
-				});
-				//firestoreからデータを引っ張ってくる。
-				let doc = firebase.firestore().collection("stalls").doc(this.state.stallId);
-				doc.get().then(response => {
+				firebase.auth().signInAnonymously().then(() => {
+					//firestoreからデータを引っ張ってくる。
+					let doc = firebase.firestore().collection("stalls").doc(this.state.stallId);
+					return doc.get();
+				}).then(response => {
 					if(!response.exists) throw new Error("invalid id specified.");
 					this.loadData(response);
-					this.setState({ ref: doc, loading: false });
-				}).catch(err => {
-					this.setState({ error: this.state.error.concat(err) });
-				});
+					this.setState({ ref: response.ref, loading: false });
+				}).catch(err => this.loadingError(err));
 			});
 		} catch(err) {
-			console.log(err);
-			this.setState({ loading: false, error: this.state.error.concat(err) });
+			this.loadingError(err);
 		}
 	}
 
@@ -62,14 +54,14 @@ class SalesDisplay extends React.Component {
 		if (checkbox && checkbox.checked){  //自動更新オンモード
 			let unsubscribe = this.state.ref.onSnapshot(
 				snapshot=>this.loadData(snapshot),
-				err => {
-					console.log(err);
-					this.setState({ error: this.state.error.concat(err) })
-				});
+				err => this.loadingError(err));
 			this.setState({ autoUnsbsc: unsubscribe });
 		}else{
 			let unsubscribe = this.state.autoUnsbsc;
-			if (unsubscribe && !this.state.error) unsubscribe() //自動更新ストップ
+			if (unsubscribe && !this.state.error.length) { //自動更新ストップ
+				unsubscribe();
+				this.setState({ autoUnsbsc: null });
+			}
 		}
 	}
 
@@ -77,11 +69,24 @@ class SalesDisplay extends React.Component {
 	loadData(docSS) {
 		let menu = docSS.get("menu");
 		let sales = docSS.get("sales");
-		if (!sales.today.toDate().eqDateOnly(new Date())){
-			//TODO today関連の更新(GASでやるのもアリ)
+		if (!moment(sales.today.toDate()).tz(tokyo).isSame(moment(), 'day')){
+			//today関連の更新
+			let cntToday = {};
+			Object.keys(sales.cntToday).forEach(key => {
+				cntToday[key] = 0;
+			});
+			docSS.ref.update("sales", {
+				today: firebase.firestore.FieldValue.serverTimestamp(),
+				yenToday: 0,
+				cntToday: cntToday,
+				yenTot: sales.yenTot,
+				cntTot: sales.cntTot,
+			}).then(() => docSS.ref.get())
+				.then(res => this.loadData(res))  //非同期で更新したあとまた呼び出す
+				.catch(error => this.loadingError(error));
 		}
 		this.setState({
-			today: sales.today.toDate(),
+			today: moment(sales.today.toDate()),
 			menu: menu,
 			salesYenTot: sales.yenTot,
 			salesYenToday: sales.yenToday,
@@ -99,9 +104,9 @@ class SalesDisplay extends React.Component {
 			//TODO 表示
 			return (<fieldset>
 				<legend>売上</legend>
-				<label><input id="chkBoxAuto" type="checkbox" onChange={this.toggleAuto()}/>自動更新</label>
+				<label><input id="chkBoxAuto" type="checkbox" onChange={this.toggleAuto.bind(this)}/>自動更新</label>
 				<section>
-					<h3>今日({this.state.today.toLocaleDateString('ja-JP')}): &yen;{this.state.salesYenToday} </h3>
+					<h3>今日({this.state.today.format('l')}): &yen;{this.state.salesYenToday} </h3>
 					<details>
 						<summary>詳細</summary>
 						{Object.keys(this.state.salesCntToday).map(key =>
@@ -121,6 +126,12 @@ class SalesDisplay extends React.Component {
 			</fieldset>)
 		}
 	}
+
+	loadingError(error) {
+		console.log(error);
+		this.setState({ loading: false, error: this.state.error.concat(error) });
+	}
+
 }
 
 render(<SalesDisplay stallId={location.pathname.split('/')[2]}/>,   //htmlのディレクトリからidを取得
