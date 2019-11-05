@@ -54,11 +54,6 @@ let config = {
 		new HtmlWebpackPlugin({
 			template: pub + '/index.html',
 			filename: 'index.html',
-			chunks: false
-		}),
-		new HtmlWebpackPlugin({
-			template: pub + '/stall_list.html',
-			filename: 'stall_list.html',
 			chunks: ['stall_list']
 		}),
 		new HtmlWebpackPlugin({
