@@ -37,6 +37,7 @@
     "@fortawesome/react-fontawesome": "^0.1.7",
     "basic-auth": "^2.0.1",
     "firebase": "^6.6.2",
+    "lodash": "^4.17.15",
     "moment-timezone": "^0.5.27",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
