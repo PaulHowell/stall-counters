@@ -13,7 +13,8 @@ const pub = path.resolve(__dirname, 'public');
 let config = {
 	entry: {
 		stall_list: src + '/StallList.jsx',
-		stall_disp: src + '/SalesDisplay.jsx'
+		stall_disp: src + '/SalesDisplay.jsx',
+		cash_register: src + '/CashRegister.jsx'
 	},
 
 	output: {
@@ -60,6 +61,11 @@ let config = {
 			template: pub + '/stalls/uts1-12_mayFes2019/index.html',
 			filename: 'stalls/uts1-12_mayFes2019/index.html',
 			chunks: ['stall_disp']
+		}),
+		new HtmlWebpackPlugin({
+			template: pub + '/stalls/uts1-12_mayFes2019/cash_register.html',
+			filename: 'stalls/uts1-12_mayFes2019/cash_register.html',
+			chunks: ['cash_register']
 		}),
 		new HtmlWebpackPlugin({
 			template: pub + '/404.html',

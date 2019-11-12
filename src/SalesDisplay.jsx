@@ -75,12 +75,10 @@ class SalesDisplay extends React.Component {
 			Object.keys(sales.cntToday).forEach(key => {
 				cntToday[key] = 0;
 			});
-			docSS.ref.update("sales", {
-				today: firebase.firestore.FieldValue.serverTimestamp(),
-				yenToday: 0,
-				cntToday: cntToday,
-				yenTot: sales.yenTot,
-				cntTot: sales.cntTot,
+			docSS.ref.update({
+				"sales.today": firebase.firestore.FieldValue.serverTimestamp(),
+				"sales.yenToday": 0,
+				"sales.cntToday": cntToday,
 			}).then(() => docSS.ref.get())
 				.then(res => this.loadData(res))  //非同期で更新したあとまた呼び出す
 				.catch(error => this.loadingError(error));
@@ -101,7 +99,6 @@ class SalesDisplay extends React.Component {
 		} else if (this.state.loading) {
 			return <Loading/>;
 		} else {
-			//TODO 表示
 			return (<fieldset>
 				<legend>売上</legend>
 				<label><input id="chkBoxAuto" type="checkbox" onChange={this.toggleAuto.bind(this)}/>自動更新</label>
@@ -128,11 +125,11 @@ class SalesDisplay extends React.Component {
 	}
 
 	loadingError(error) {
-		console.log(error);
+		console.error(error);
 		this.setState({ loading: false, error: this.state.error.concat(error) });
 	}
 
 }
 
-render(<SalesDisplay stallId={location.pathname.split('/')[2]}/>,   //htmlのディレクトリからidを取得
+render(<SalesDisplay stallId={location.pathname.split('/')[2]} />,   //htmlのディレクトリからidを取得
 	document.getElementById("sales_disp"));

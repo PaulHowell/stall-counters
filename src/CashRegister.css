@@ -1,0 +1,57 @@
+.cash_disp {
+    border: 3px;
+    border-radius: 8px;
+}
+
+.submit_btn {
+    font-size: x-large;
+    display: inline-block;
+    margin: 0.3em 0.5em;
+    padding: 0.3em 0.7em;
+    text-decoration: none;
+    transition: .4s;
+    color: limegreen;
+    border: solid 2px limegreen;
+    border-radius: 3px;
+    background: white;
+}
+.submit_btn:active {
+    background: limegreen;
+    color: white;
+}
+.submit_btn:disabled {
+    background: grey;
+    color: darkolivegreen;
+    border-color: darkolivegreen;
+}
+
+.cancel_btn {
+    font-size: x-large;
+    display: inline-block;
+    margin: 0.3em 0.5em;
+    padding: 0.3em 0.7em;
+    text-decoration: none;
+    transition: .4s;
+    color: crimson;
+    border: solid 2px  crimson;
+    border-radius: 3px;
+    background: white;
+}
+.cancel_btn:hover {
+    background: crimson;
+    color: white;
+}
+
+.mt_item {
+    font-size: large;
+    margin: 0.2em 0.5em;
+}
+
+.mt_item > button {
+    font-size: inherit;
+    padding: 0.3em;
+    margin: 0.3em 0.2em;
+    border: solid 1px gray;
+    border-radius: 7px;
+    background: white;
+}
