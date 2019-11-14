@@ -33,8 +33,8 @@ class SalesDisplay extends React.Component {
 		try {
 			fbinitAnd(() => {
 				firebase.auth().signInAnonymously().then(() => {
-					//firestoreからデータを引っ張ってくる。
 					let doc = firebase.firestore().collection("stalls").doc(this.state.stallId);
+					//firestoreからデータを引っ張ってくる。
 					return doc.get();
 				}).then(response => {
 					if(!response.exists) throw new Error("invalid id specified.");
