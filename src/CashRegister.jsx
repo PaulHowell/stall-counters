@@ -50,7 +50,6 @@ class CashRegister extends React.Component {
 				}).then(response => {
 					if (!response.exists) throw new Error("invalid id specified.");
 					this.loadData(response);
-					this.setState({ loading: false });
 				}).catch(err => this.loadingError(err));
 			});
 		} catch(err) {
@@ -62,7 +61,7 @@ class CashRegister extends React.Component {
 	loadData(docSS) {
 		let menu = docSS.get("menu");
 		let tickets = docSS.get("tickets");
-		this.setState({ menu: menu, tickets: tickets });
+		this.setState({ menu: menu, tickets: tickets, loading: false });
 	}
 
 	loadingError(error) {

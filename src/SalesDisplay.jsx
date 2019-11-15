@@ -38,8 +38,8 @@ class SalesDisplay extends React.Component {
 					return doc.get();
 				}).then(response => {
 					if(!response.exists) throw new Error("invalid id specified.");
+					this.setState({ ref: response.ref });
 					this.loadData(response);
-					this.setState({ ref: response.ref, loading: false });
 				}).catch(err => this.loadingError(err));
 			});
 		} catch(err) {
@@ -94,6 +94,7 @@ class SalesDisplay extends React.Component {
 				salesYenToday: sales.yenToday,
 				salesCntTot: sales.cntTot,
 				salesCntToday: sales.cntToday,
+				loading: false,
 			});
 		}).catch(error => this.loadingError(error))
 	}
