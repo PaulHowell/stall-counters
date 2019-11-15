@@ -69,28 +69,33 @@ class SalesDisplay extends React.Component {
 	loadData(docSS) {
 		let menu = docSS.get("menu");
 		let sales = docSS.get("sales");
-		if (!moment(sales.today.toDate()).tz(tokyo).isSame(moment(), 'day')){
-			//today関連の更新
-			let cntToday = {};
-			Object.keys(sales.cntToday).forEach(key => {
-				cntToday[key] = 0;
+		new Promise((resolve, reject) => {
+			if (!moment(sales.today.toDate()).tz(tokyo).isSame(moment(), 'day')){
+				//today関連の更新
+				let cntToday = {};
+				Object.keys(sales.cntToday).forEach(key => {
+					cntToday[key] = 0;
+				});
+				docSS.ref.update({
+					"sales.today": firebase.firestore.FieldValue.serverTimestamp(),
+					"sales.yenToday": 0,
+					"sales.cntToday": cntToday,
+				}).then(() => docSS.ref.get())
+					.then(res => resolve(res.get("sales")))
+					.catch(error => reject(error));
+			}else {
+				resolve(sales);
+			}
+		}).then(sales => {
+			this.setState({
+				today: moment(sales.today.toDate()),
+				menu: menu,
+				salesYenTot: sales.yenTot,
+				salesYenToday: sales.yenToday,
+				salesCntTot: sales.cntTot,
+				salesCntToday: sales.cntToday,
 			});
-			docSS.ref.update({
-				"sales.today": firebase.firestore.FieldValue.serverTimestamp(),
-				"sales.yenToday": 0,
-				"sales.cntToday": cntToday,
-			}).then(() => docSS.ref.get())
-				.then(res => this.loadData(res))  //非同期で更新したあとまた呼び出す
-				.catch(error => this.loadingError(error));
-		}
-		this.setState({
-			today: moment(sales.today.toDate()),
-			menu: menu,
-			salesYenTot: sales.yenTot,
-			salesYenToday: sales.yenToday,
-			salesCntTot: sales.cntTot,
-			salesCntToday: sales.cntToday,
-		});
+		}).catch(error => this.loadingError(error))
 	}
 
 	render() {
