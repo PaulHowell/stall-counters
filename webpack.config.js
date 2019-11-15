@@ -14,7 +14,7 @@ let config = {
 	entry: {
 		stall_list: src + '/StallList.jsx',
 		stall_disp: src + '/SalesDisplay.jsx',
-		cash_register: src + '/CashRegister.jsx'
+		cash_register: ['@babel/polyfill', src + '/CashRegister.jsx']
 	},
 
 	output: {
