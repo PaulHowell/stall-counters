@@ -6,7 +6,7 @@ import "firebase/auth";
 import "firebase/firestore";
 import {ErrLoading, Loading} from "./Loading";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faPlusCircle, faMinusCircle} from "@fortawesome/free-solid-svg-icons";
+import {faPlusCircle, faMinusCircle, faHourglassHalf} from "@fortawesome/free-solid-svg-icons";
 import fbinitAnd from "./fbinit";
 import styles from "./CashRegister.css";
 import * as moment from "moment-timezone";
@@ -36,6 +36,7 @@ class CashRegister extends React.Component {
 			tickets: null,
 			order: {},
 			usedTickets: {},
+			submitting: false,
 		}
 	}
 
@@ -125,6 +126,7 @@ class CashRegister extends React.Component {
 	// 注文確定。注文個数を0に。
 	submit(){
 		if (!this.chkTickets()) return;
+		this.setState({ submitting: true });
 		let total_price = this.calculate();
 		let order = this.state.order;
 		let usedTickets = this.state.usedTickets;
@@ -167,6 +169,7 @@ class CashRegister extends React.Component {
 				served: false,
 			});
 		}).then(() => {
+			this.setState({ submitting: false });
 			this.clearAll();
 		}).catch(error => {
 			console.error(error);
@@ -175,6 +178,7 @@ class CashRegister extends React.Component {
 	}
 
 	submitEnabled(){
+		if (this.state.submitting) return false;
 		if (!Object.keys(this.state.order).length || Object.values(this.state.order).every(cnt => cnt===0)) return false;
 		return this.chkTickets();
 	}
@@ -195,7 +199,7 @@ class CashRegister extends React.Component {
 							<MenuItem name={item.name}
 						                 onMinusClick={this.onOrderChanged.bind(this, id, -1)}
 						                 onPlusClick={this.onOrderChanged.bind(this, id, 1)} />
-							{this.getOrderOf(id)}個 単価&yen;{item.price}
+							{this.getOrderOf(id)}個 (単価&yen;{item.price})
 						</div>
 					} else {
 						return <fieldset key={id}>
@@ -206,7 +210,7 @@ class CashRegister extends React.Component {
 									          onMinusClick={this.onOrderChanged.bind(this, sub_id, -1)}
 									          onPlusClick={this.onOrderChanged.bind(this, sub_id, 1)}
 									/>
-									{this.getOrderOf(sub_id)}個 単価&yen;{sub_item.price}
+									{this.getOrderOf(sub_id)}個 (単価&yen;{sub_item.price})
 								</div>
 							)}
 						</fieldset>
@@ -228,9 +232,9 @@ class CashRegister extends React.Component {
 				<div>
 					<button onClick={this.submit.bind(this)} className={styles.submit_btn} disabled={!this.submitEnabled()}>注文確定</button>
 
-					<button onClick={this.clearAll.bind(this)} className={styles.cancel_btn}>キャンセル</button>
-				</div>
-
+					<button onClick={this.clearAll.bind(this)} className={styles.cancel_btn} disabled={this.state.submitting}>キャンセル</button>
+					{(this.state.submitting) && <div><FontAwesomeIcon icon={faHourglassHalf} color="orange" /> 処理中...</div>}
+				</div>,
 				//TODO 直近の注文表示(あとでおk)
 			]
 		}

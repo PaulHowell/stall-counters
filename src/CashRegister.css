@@ -41,6 +41,11 @@
     background: crimson;
     color: white;
 }
+.cancel_btn:disabled {
+    background: grey;
+    color: darkmagenta;
+    border-color: darkmagenta;
+}
 
 .mt_item {
     font-size: large;
