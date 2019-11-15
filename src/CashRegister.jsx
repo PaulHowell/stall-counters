@@ -129,48 +129,50 @@ class CashRegister extends React.Component {
 		let total_price = this.calculate();
 		let order = this.state.order;
 		let usedTickets = this.state.usedTickets;
-		this.state.salesTableRef.add({
-			timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-			staff: firebase.auth().currentUser.uid,
-			order: order,
-			tickets: usedTickets,
-			total_price: total_price,
-		}).catch(error => {console.error(error)});
-		this.state.stallRef.get().then(response => {
-			return new Promise((resolve, reject) => {
-				let sales = response.get("sales");
-				if (!moment(sales.today.toDate()).tz(tokyo).isSame(moment(), 'day')){
-					//today関連の更新
-					let cntToday = {};
-					Object.keys(sales.cntToday).forEach(key => {
-						cntToday[key] = 0;
-					});
-					this.state.stallRef.update({
-						"sales.today": firebase.firestore.FieldValue.serverTimestamp(),
-						"sales.yenToday": 0,
-						"sales.cntToday": cntToday,
-					}).then(() => {response.ref.get()})
-						.then(latest_response => {resolve(latest_response)})
-						.catch(error => {reject(error)});
-				}else resolve(response);
-			});
-		}).then(response => {
-			let sales = response.get("sales");
+
+		firebase.firestore().runTransaction(async transaction => {
+			const stallData = await transaction.get(this.state.stallRef);
+			const sales = stallData.get("sales");
 			let cntToday = sales.cntToday;
+			let yenToday = sales.yenToday;
 			let cntTot = sales.cntTot;
+			const lastIdx = stallData.get("last_index");
+			if (!moment(sales.today.toDate()).tz(tokyo).isSame(moment(), 'day')){
+				//today関連の更新も同時に
+				cntToday = {};
+				Object.keys(sales.cntToday).forEach(key => {
+					cntToday[key] = 0;
+				});
+				yenToday = 0;
+				transaction.update(this.state.stallRef,{ "sales.today": firebase.firestore.FieldValue.serverTimestamp() })
+			}
 			for (let [item, cnt] of Object.entries(order)){
 				cntToday[item] += cnt;
 				cntTot[item] += cnt;
 			}
-			this.state.stallRef.update({
-				"sales.yenToday": firebase.firestore.FieldValue.increment(total_price),
+			transaction.update(this.state.stallRef, {
+				"sales.yenToday": yenToday,
 				"sales.cntToday": cntToday,
 				"sales.yenTot": firebase.firestore.FieldValue.increment(total_price),
 				"sales.cntTot": cntTot,
-			})
+				"last_index": firebase.firestore.FieldValue.increment(1),
+			});
+			//注文内容をリストに追加
+			transaction.set(this.state.salesTableRef.doc(), {
+				timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+				staff: firebase.auth().currentUser.uid,
+				order: order,
+				tickets: usedTickets,
+				total_price: total_price,
+				index: lastIdx + 1,
+				served: false,
+			});
 		}).then(() => {
 			this.clearAll();
-		}).catch(error => console.error(error));
+		}).catch(error => {
+			console.error(error);
+			window.alert("エラー\n"+error);
+		});
 	}
 
 	submitEnabled(){
