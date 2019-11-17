@@ -6,7 +6,7 @@ import "firebase/auth";
 import "firebase/firestore";
 import {ErrLoading, Loading} from "./Loading";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faPlusCircle, faMinusCircle} from "@fortawesome/free-solid-svg-icons";
+import {faPlusCircle, faMinusCircle, faHourglassHalf} from "@fortawesome/free-solid-svg-icons";
 import fbinitAnd from "./fbinit";
 import styles from "./CashRegister.css";
 import * as moment from "moment-timezone";
@@ -36,6 +36,7 @@ class CashRegister extends React.Component {
 			tickets: null,
 			order: {},
 			usedTickets: {},
+			submitting: false,
 		}
 	}
 
@@ -50,7 +51,6 @@ class CashRegister extends React.Component {
 				}).then(response => {
 					if (!response.exists) throw new Error("invalid id specified.");
 					this.loadData(response);
-					this.setState({ loading: false });
 				}).catch(err => this.loadingError(err));
 			});
 		} catch(err) {
@@ -62,7 +62,7 @@ class CashRegister extends React.Component {
 	loadData(docSS) {
 		let menu = docSS.get("menu");
 		let tickets = docSS.get("tickets");
-		this.setState({ menu: menu, tickets: tickets });
+		this.setState({ menu: menu, tickets: tickets, loading: false });
 	}
 
 	loadingError(error) {
@@ -126,54 +126,59 @@ class CashRegister extends React.Component {
 	// 注文確定。注文個数を0に。
 	submit(){
 		if (!this.chkTickets()) return;
+		this.setState({ submitting: true });
 		let total_price = this.calculate();
 		let order = this.state.order;
 		let usedTickets = this.state.usedTickets;
-		this.state.salesTableRef.add({
-			timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-			staff: firebase.auth().currentUser.uid,
-			order: order,
-			tickets: usedTickets,
-			total_price: total_price,
-		}).catch(error => {console.error(error)});
-		this.state.stallRef.get().then(response => {
-			return new Promise((resolve, reject) => {
-				let sales = response.get("sales");
-				if (!moment(sales.today.toDate()).tz(tokyo).isSame(moment(), 'day')){
-					//today関連の更新
-					let cntToday = {};
-					Object.keys(sales.cntToday).forEach(key => {
-						cntToday[key] = 0;
-					});
-					this.state.stallRef.update({
-						"sales.today": firebase.firestore.FieldValue.serverTimestamp(),
-						"sales.yenToday": 0,
-						"sales.cntToday": cntToday,
-					}).then(() => {response.ref.get()})
-						.then(latest_response => {resolve(latest_response)})
-						.catch(error => {reject(error)});
-				}else resolve(response);
-			});
-		}).then(response => {
-			let sales = response.get("sales");
+
+		firebase.firestore().runTransaction(async transaction => {
+			const stallData = await transaction.get(this.state.stallRef);
+			const sales = stallData.get("sales");
 			let cntToday = sales.cntToday;
+			let yenToday = sales.yenToday;
 			let cntTot = sales.cntTot;
+			const lastIdx = stallData.get("last_index");
+			if (!moment(sales.today.toDate()).tz(tokyo).isSame(moment(), 'day')){
+				//today関連の更新も同時に
+				cntToday = {};
+				Object.keys(sales.cntToday).forEach(key => {
+					cntToday[key] = 0;
+				});
+				yenToday = 0;
+				transaction.update(this.state.stallRef,{ "sales.today": firebase.firestore.FieldValue.serverTimestamp() })
+			}
 			for (let [item, cnt] of Object.entries(order)){
 				cntToday[item] += cnt;
 				cntTot[item] += cnt;
 			}
-			this.state.stallRef.update({
-				"sales.yenToday": firebase.firestore.FieldValue.increment(total_price),
+			transaction.update(this.state.stallRef, {
+				"sales.yenToday": yenToday,
 				"sales.cntToday": cntToday,
 				"sales.yenTot": firebase.firestore.FieldValue.increment(total_price),
 				"sales.cntTot": cntTot,
-			})
+				"last_index": firebase.firestore.FieldValue.increment(1),
+			});
+			//注文内容をリストに追加
+			transaction.set(this.state.salesTableRef.doc(), {
+				timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+				staff: firebase.auth().currentUser.uid,
+				order: order,
+				tickets: usedTickets,
+				total_price: total_price,
+				index: lastIdx + 1,
+				served: false,
+			});
 		}).then(() => {
+			this.setState({ submitting: false });
 			this.clearAll();
-		}).catch(error => console.error(error));
+		}).catch(error => {
+			console.error(error);
+			window.alert("エラー\n"+error);
+		});
 	}
 
 	submitEnabled(){
+		if (this.state.submitting) return false;
 		if (!Object.keys(this.state.order).length || Object.values(this.state.order).every(cnt => cnt===0)) return false;
 		return this.chkTickets();
 	}
@@ -194,7 +199,7 @@ class CashRegister extends React.Component {
 							<MenuItem name={item.name}
 						                 onMinusClick={this.onOrderChanged.bind(this, id, -1)}
 						                 onPlusClick={this.onOrderChanged.bind(this, id, 1)} />
-							{this.getOrderOf(id)}個 単価&yen;{item.price}
+							{this.getOrderOf(id)}個 (単価&yen;{item.price})
 						</div>
 					} else {
 						return <fieldset key={id}>
@@ -205,7 +210,7 @@ class CashRegister extends React.Component {
 									          onMinusClick={this.onOrderChanged.bind(this, sub_id, -1)}
 									          onPlusClick={this.onOrderChanged.bind(this, sub_id, 1)}
 									/>
-									{this.getOrderOf(sub_id)}個 単価&yen;{sub_item.price}
+									{this.getOrderOf(sub_id)}個 (単価&yen;{sub_item.price})
 								</div>
 							)}
 						</fieldset>
@@ -227,9 +232,9 @@ class CashRegister extends React.Component {
 				<div>
 					<button onClick={this.submit.bind(this)} className={styles.submit_btn} disabled={!this.submitEnabled()}>注文確定</button>
 
-					<button onClick={this.clearAll.bind(this)} className={styles.cancel_btn}>キャンセル</button>
-				</div>
-
+					<button onClick={this.clearAll.bind(this)} className={styles.cancel_btn} disabled={this.state.submitting}>キャンセル</button>
+					{(this.state.submitting) && <div><FontAwesomeIcon icon={faHourglassHalf} color="orange" /> 処理中...</div>}
+				</div>,
 				//TODO 直近の注文表示(あとでおk)
 			]
 		}
