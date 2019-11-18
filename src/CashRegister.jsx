@@ -152,7 +152,7 @@ class CashRegister extends React.Component {
 				cntTot[item] += cnt;
 			}
 			transaction.update(this.state.stallRef, {
-				"sales.yenToday": yenToday,
+				"sales.yenToday": yenToday + total_price,
 				"sales.cntToday": cntToday,
 				"sales.yenTot": firebase.firestore.FieldValue.increment(total_price),
 				"sales.cntTot": cntTot,
