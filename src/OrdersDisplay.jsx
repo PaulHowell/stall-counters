@@ -38,7 +38,7 @@ class OrderCard extends React.Component {
 	}
 
 	onCancel(){
-		if (window.confirm("[確認] 本当にキャンセルしますか")) {
+		if (window.confirm("[確認] 本当にキャンセルしますか？")) {
 			this.setState({btn_disabled: true});
 			firebase.firestore().runTransaction(async transaction => {
 				const stallData = await transaction.get(this.state.stall_ref);
@@ -182,17 +182,19 @@ class OrdersDisplay extends React.Component {
 			return [
 				<h2><FontAwesomeIcon icon={faReceipt} />注文一覧</h2>,
 				<section>
-					{Object.entries(this.state.queue).map(([index, data]) =>
-					<OrderCard key={data.id}
-					           index={index}
-					           stall_ref={this.state.stallRef}
-					           doc_ref={this.state.salesTableRef.doc(data.id)}
-					           order={data.order}
-					           menu={this.state.menu}
-					           timestamp={data.timestamp}
-					           total_price={data.total_price}
-					/>
-					)}
+					{(Object.keys(this.state.queue).length) ?
+						Object.entries(this.state.queue).map(([index, data]) =>
+						<OrderCard key={data.id}
+						           index={index}
+						           stall_ref={this.state.stallRef}
+						           doc_ref={this.state.salesTableRef.doc(data.id)}
+						           order={data.order}
+						           menu={this.state.menu}
+						           timestamp={data.timestamp}
+						           total_price={data.total_price}
+						/>
+					)   :   <p>現在、注文なし</p>
+					}
 				</section>,
 			]
 		}
