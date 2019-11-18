@@ -1,0 +1,53 @@
+.order_card {
+    background: white;
+    border: dashed darkslateblue 2px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px #ccc;
+    padding: 0.3em;
+    margin: 0.4em;
+    display: inline-block;
+}
+
+.order_card > ul {
+    margin-block-start: 0.4em;
+    margin-block-end: 0.2em;
+    padding-inline-start: 20px;
+}
+
+.serve_btn {
+    display: inline-block;
+    margin: 0.2em;
+    padding: 0.2em 0.3em;
+    color: limegreen;
+    border: solid 2px limegreen;
+    border-radius: 3px;
+    background: white;
+}
+.serve_btn:active {
+    background: limegreen;
+    color: white;
+}
+.serve_btn:disabled {
+    background: grey;
+    color: darkolivegreen;
+    border-color: darkolivegreen;
+}
+
+.cancel_btn {
+    display: inline-block;
+    margin: 0.2em;
+    padding: 0.2em 0.3em;
+    color: crimson;
+    border: solid 2px  crimson;
+    border-radius: 3px;
+    background: white;
+}
+.cancel_btn:active {
+    background: crimson;
+    color: white;
+}
+.cancel_btn:disabled {
+    background: grey;
+    color: darkmagenta;
+    border-color: darkmagenta;
+}
