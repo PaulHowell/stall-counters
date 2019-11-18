@@ -99,6 +99,13 @@ class SalesDisplay extends React.Component {
 		}).catch(error => this.loadingError(error))
 	}
 
+	getMenuItem(itemId){
+		if (this.state.menu[itemId]) return this.state.menu[itemId];
+		for (let item of Object.values(this.state.menu)){
+			if (item.sub && item.sub[itemId]) return item.sub[itemId];
+		}
+	}
+
 	render() {
 		if (this.state.error.length) {
 			return <ErrLoading error={this.state.error} />;
@@ -113,7 +120,7 @@ class SalesDisplay extends React.Component {
 					<details>
 						<summary>詳細</summary>
 						{Object.keys(this.state.salesCntToday).map(key =>
-							<p key={key+"_today"}>{this.state.menu[key].name}: {this.state.salesCntToday[key]}個</p>
+							<p key={key+"_today"}>{this.getMenuItem(key).name}: {this.state.salesCntToday[key]}個</p>
 						)}
 					</details>
 				</section>
@@ -122,7 +129,7 @@ class SalesDisplay extends React.Component {
 					<details>
 						<summary>詳細</summary>
 						{Object.keys(this.state.salesCntTot).map(key =>
-							<p key={key+"_tot"}>{this.state.menu[key].name}: {this.state.salesCntTot[key]}個</p>
+							<p key={key+"_tot"}>{this.getMenuItem(key).name}: {this.state.salesCntTot[key]}個</p>
 						)}
 					</details>
 				</section>
