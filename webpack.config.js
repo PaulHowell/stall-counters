@@ -14,7 +14,8 @@ let config = {
 	entry: {
 		stall_list: src + '/StallList.jsx',
 		stall_disp: src + '/SalesDisplay.jsx',
-		cash_register: ['@babel/polyfill', src + '/CashRegister.jsx']
+		cash_register: ['@babel/polyfill', src + '/CashRegister.jsx'],
+		orders_disp: src + '/OrdersDisplay.jsx'
 	},
 
 	output: {
@@ -66,6 +67,11 @@ let config = {
 			template: pub + '/stalls/uts1-12_mayFes2019/cash_register.html',
 			filename: 'stalls/uts1-12_mayFes2019/cash_register.html',
 			chunks: ['cash_register']
+		}),
+		new HtmlWebpackPlugin({
+			template: pub + '/stalls/uts1-12_mayFes2019/orders.html',
+			filename: 'stalls/uts1-12_mayFes2019/orders.html',
+			chunks: ['orders_disp']
 		}),
 		new HtmlWebpackPlugin({
 			template: pub + '/404.html',
