@@ -6,6 +6,9 @@ const admins = {
 const iceage = {
 	'uts1-12': { password: 'meichan' }
 };
+const iceageman = {
+	'uts1-12': { password: 'komakkero' }
+};
 
 module.exports = function (req, res, next) {
 	let user = auth(req);
@@ -16,6 +19,9 @@ module.exports = function (req, res, next) {
 			return next();
 		}else if(stall) {
 			if (stall==='uts1-12_mayFes2019' && iceage[user.name] && iceage[user.name].password===user.pass){
+				return next();
+			}
+			if (stall==='iceageman2019' && iceageman[user.name] && iceageman[user.name].password===user.pass){
 				return next();
 			}
 		}

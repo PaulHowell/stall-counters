@@ -74,6 +74,21 @@ let config = {
 			chunks: ['orders_disp']
 		}),
 		new HtmlWebpackPlugin({
+			template: pub + '/stalls/iceageman2019/index.html',
+			filename: 'stalls/iceageman2019/index.html',
+			chunks: ['stall_disp']
+		}),
+		new HtmlWebpackPlugin({
+			template: pub + '/stalls/iceageman2019/cash_register.html',
+			filename: 'stalls/iceageman2019/cash_register.html',
+			chunks: ['cash_register']
+		}),
+		new HtmlWebpackPlugin({
+			template: pub + '/stalls/iceageman2019/orders.html',
+			filename: 'stalls/iceageman2019/orders.html',
+			chunks: ['orders_disp']
+		}),
+		new HtmlWebpackPlugin({
 			template: pub + '/404.html',
 			filename: '404.html',
 			inject: false
