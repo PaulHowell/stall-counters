@@ -47,6 +47,13 @@ class SalesDisplay extends React.Component {
 		}
 	}
 
+	componentWillUnmount(){
+		let unsubscribe = this.state.autoUnsbsc;
+		if (unsubscribe) { //自動更新ストップ
+			unsubscribe();
+		}
+	}
+
 	//onSnapshotのオンオフ切り替え
 	//チェックボックスのonChangeイベントで呼び出される
 	toggleAuto(){
@@ -58,7 +65,7 @@ class SalesDisplay extends React.Component {
 			this.setState({ autoUnsbsc: unsubscribe });
 		}else{
 			let unsubscribe = this.state.autoUnsbsc;
-			if (unsubscribe && !this.state.error.length) { //自動更新ストップ
+			if (unsubscribe) { //自動更新ストップ
 				unsubscribe();
 				this.setState({ autoUnsbsc: null });
 			}

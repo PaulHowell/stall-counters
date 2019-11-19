@@ -88,6 +88,8 @@ class OrderCard extends React.Component {
 	}
 }
 
+
+
 class OrdersDisplay extends React.Component {
 	constructor(props) {
 		super(props);
@@ -120,6 +122,13 @@ class OrdersDisplay extends React.Component {
 			});
 		} catch(err) {
 			this.loadingError(err);
+		}
+	}
+
+	componentWillUnmount(){
+		let unsubscribe = this.state.autoUnsbsc;
+		if (unsubscribe) { //自動更新ストップ
+			unsubscribe();
 		}
 	}
 
@@ -173,6 +182,27 @@ class OrdersDisplay extends React.Component {
 		};
 	}
 
+	getSummary(){
+		let summary = {};
+		Object.values(this.state.queue).forEach( data => {
+			Object.entries(data.order).forEach(([item_id, cnt]) => {
+				if (cnt){
+					summary[item_id] = (summary[item_id] || 0) + cnt;
+				}
+			});
+		});
+		return summary
+	}
+
+	getMenuName(itemId){
+		if (this.state.menu[itemId]) return this.state.menu[itemId].name;
+		for (let item of Object.values(this.state.menu)){
+			if (item.sub){
+				if (item.sub[itemId]) return item.sub[itemId].name;
+			}
+		}
+	}
+
 	render() {
 		if (this.state.error.length) {
 			return <ErrLoading error={this.state.error} />;
@@ -180,6 +210,12 @@ class OrdersDisplay extends React.Component {
 			return <Loading/>;
 		} else {
 			return [
+				<fieldset>
+					<legend>注文概要(トータル)</legend>
+					{Object.entries(this.getSummary()).map(([id, cnt]) =>
+						<p key={"summary_"+id}>{this.getMenuName(id)}: {cnt}個</p>
+					)}
+				</fieldset>,
 				<h2><FontAwesomeIcon icon={faReceipt} />注文一覧</h2>,
 				<section>
 					{(Object.keys(this.state.queue).length) ?
