@@ -7,6 +7,7 @@ import {ErrLoading, Loading} from "./Loading";
 import fbinitAnd from "./fbinit";
 import * as moment from "moment-timezone";
 import styles from "./SalesDisplay.css"
+import _ from "lodash";
 
 moment.locale('ja-JP');
 const tokyo = 'Asia/Tokyo';
@@ -124,20 +125,38 @@ class SalesDisplay extends React.Component {
 				<label><input id="chkBoxAuto" type="checkbox" onChange={this.toggleAuto.bind(this)}/>自動更新</label>
 				<section>
 					<h3>今日({this.state.today.format('l')}): &yen;{this.state.salesYenToday} </h3>
-					<details>
+					<details open>
 						<summary>詳細</summary>
-						{Object.keys(this.state.salesCntToday).map(key =>
-							<p key={key+"_today"}>{this.getMenuItem(key).name}: {this.state.salesCntToday[key]}個</p>
-						)}
+						{Object.entries(this.state.menu).map( ([id, item]) => {
+							if (!item.sub) {
+								return <p key={id+"_today"}>{item.name}: {this.state.salesCntToday[id] || 0}個</p>
+							}else {
+								return <fieldset key={id+"_today"}>
+									<legend>{item.name} {_.sum(Object.keys(item.sub).map(sub_id => (this.state.salesCntToday[sub_id] || 0)))}個</legend>
+									{Object.entries(item.sub).map( ([sub_id, sub_item]) =>
+										<div key={sub_id+"_today"}>{sub_item.name}: {this.state.salesCntToday[sub_id] || 0}個</div>
+									)}
+								</fieldset>
+							}
+						})}
 					</details>
 				</section>
 				<section>
 					<h3>総売上: &yen;{this.state.salesYenTot}</h3>
-					<details>
+					<details open>
 						<summary>詳細</summary>
-						{Object.keys(this.state.salesCntTot).map(key =>
-							<p key={key+"_tot"}>{this.getMenuItem(key).name}: {this.state.salesCntTot[key]}個</p>
-						)}
+						{Object.entries(this.state.menu).map( ([id, item]) => {
+							if (!item.sub) {
+								return <p key={id+"_tot"}>{item.name}: {this.state.salesCntTot[id] || 0}個</p>
+							}else {
+								return <fieldset key={id+"_tot"}>
+									<legend>{item.name} {_.sum(Object.keys(item.sub).map(sub_id => (this.state.salesCntTot[sub_id] || 0)))}個</legend>
+									{Object.entries(item.sub).map( ([sub_id, sub_item]) =>
+										<div key={sub_id+"_tot"}>{sub_item.name}: {this.state.salesCntTot[sub_id] || 0}個</div>
+									)}
+								</fieldset>
+							}
+						})}
 					</details>
 				</section>
 			</fieldset>)

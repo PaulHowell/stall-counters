@@ -15,7 +15,7 @@ moment.locale('ja-JP');
 const tokyo = 'Asia/Tokyo';
 
 function MenuItem(props){
-	return <span className={styles.mt_item}>
+	return <span>
 		<button onClick={props.onMinusClick}><FontAwesomeIcon icon={faMinusCircle} color="blue" /></button>
 		<span>{props.name}</span>
 		<button onClick={props.onPlusClick}><FontAwesomeIcon icon={faPlusCircle} color="red" /></button>
@@ -191,11 +191,11 @@ class CashRegister extends React.Component {
 		} else {
 			return [
 				<h1>注文</h1>,
-				<h3 className={styles.cash_disp}>合計: &yen;{this.calculate()}</h3>,
+				<h2 className={styles.cash_disp}>合計: &yen;{this.calculate()}</h2>,
 				// メニュー一覧
 				Object.entries(this.state.menu).map( ([id, item]) => {
 					if (item.price) {
-						return <div key={id}>
+						return <div key={id} className={styles.mt_item}>
 							<MenuItem name={item.name}
 						                 onMinusClick={this.onOrderChanged.bind(this, id, -1)}
 						                 onPlusClick={this.onOrderChanged.bind(this, id, 1)} />
@@ -203,9 +203,9 @@ class CashRegister extends React.Component {
 						</div>
 					} else {
 						return <fieldset key={id}>
-							<legend>{item.name} {_.sum(Object.keys(item.sub).map(sub_id => this.getOrderOf(sub_id)))}</legend>
+							<legend>{item.name} {_.sum(Object.keys(item.sub).map(sub_id => this.getOrderOf(sub_id)))}個</legend>
 							{Object.entries(item.sub).map( ([sub_id, sub_item]) =>
-								<div key={sub_id}>
+								<div key={sub_id} className={styles.mt_item}>
 									<MenuItem name={sub_item.name}
 									          onMinusClick={this.onOrderChanged.bind(this, sub_id, -1)}
 									          onPlusClick={this.onOrderChanged.bind(this, sub_id, 1)}
@@ -220,7 +220,7 @@ class CashRegister extends React.Component {
 				<fieldset>
 					<legend>チケット</legend>
 					{Object.entries(this.state.tickets).map(([ticket_id, ticket]) =>
-						<div key={ticket_id}>
+						<div key={ticket_id} className={styles.mt_item}>
 							<MenuItem name={ticket.name}
 							          onMinusClick={this.onTicketsChanged.bind(this, ticket_id, -1)}
 							          onPlusClick={this.onTicketsChanged.bind(this, ticket_id, 1)}
