@@ -34,6 +34,7 @@ class CashRegister extends React.Component {
 			salesTableRef: null,
 			menu: null,
 			tickets: null,
+			set: null,
 			order: {},
 			usedTickets: {},
 			submitting: false,
@@ -62,7 +63,8 @@ class CashRegister extends React.Component {
 	loadData(docSS) {
 		let menu = docSS.get("menu");
 		let tickets = docSS.get("tickets");
-		this.setState({ menu: menu, tickets: tickets, loading: false });
+		let set = docSS.get("set");
+		this.setState({ menu: menu, tickets: tickets, set: set, loading: false });
 	}
 
 	loadingError(error) {
@@ -73,9 +75,28 @@ class CashRegister extends React.Component {
 	// 合計金額計算
 	calculate(){
 		if (!this.chkTickets()) return "チケットが注文数より多い";
-		let price = _.sum(Object.entries(this.state.order).map(([id, cnt]) => this.price(id)*cnt));
 		let discount = _.sum(Object.entries(this.state.usedTickets).map(([ticketId, cnt]) => this.state.tickets[ticketId].discount * cnt));
-		return price - discount
+		let raw_price = _.sum(Object.entries(this.state.order).map(([id, cnt]) => this.price(id)*cnt));
+		if(this.chkSet(this.state.order)){
+			let ord = Object.assign({}, this.state.order);
+			let set_price = 0;
+			do {
+				set_price += this.state.set.price;
+				this.state.set.contents.forEach( map => {
+					let c = map.cnt;
+					for (let item of map.items){
+						if(ord[item]){
+							let tmp = Math.min(ord[item], c);
+							ord[item] -= tmp;
+							c -= tmp;
+						}
+						if(c<=0) break;
+					}
+				});
+			} while (this.chkSet(ord));
+			set_price += _.sum(Object.entries(ord).map(([id, cnt]) => this.price(id)*cnt));
+			return Math.min(raw_price, set_price) - discount;
+		}else return raw_price - discount;
 	}
 
 	// メニューから、該当するidのアイテムを探して値段を返す
@@ -91,6 +112,13 @@ class CashRegister extends React.Component {
 	chkTickets(){
 		return Object.entries(this.state.usedTickets).every(([ticketId, cnt]) =>
 			_.sum(this.state.tickets[ticketId].available4.map(id => this.getOrderOf(id))) >= cnt
+		);
+	}
+
+	chkSet(ord){
+		if (!this.state.set) return false;
+		return this.state.set.contents.every( map =>
+			_.sum(map.items.map(item => (ord[item] || 0))) >= map.cnt
 		);
 	}
 
