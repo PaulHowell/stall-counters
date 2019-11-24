@@ -34,7 +34,7 @@ class CashRegister extends React.Component {
 			salesTableRef: null,
 			menu: null,
 			tickets: null,
-			set: null,
+			sets: null,
 			order: {},
 			usedTickets: {},
 			submitting: false,
@@ -63,8 +63,8 @@ class CashRegister extends React.Component {
 	loadData(docSS) {
 		let menu = docSS.get("menu");
 		let tickets = docSS.get("tickets");
-		let set = docSS.get("set");
-		this.setState({ menu: menu, tickets: tickets, set: set, loading: false });
+		let sets = docSS.get("sets") || [docSS.get("set")];
+		this.setState({ menu: menu, tickets: tickets, sets: sets, loading: false });
 	}
 
 	loadingError(error) {
@@ -76,8 +76,35 @@ class CashRegister extends React.Component {
 	calculate(){
 		if (!this.chkTickets()) return "チケットが注文数より多い";
 		let discount = _.sum(Object.entries(this.state.usedTickets).map(([ticketId, cnt]) => this.state.tickets[ticketId].discount * cnt));
-		let raw_price = _.sum(Object.entries(this.state.order).map(([id, cnt]) => this.price(id)*cnt));
-		if(this.chkSet(this.state.order)){
+		let price = 0;
+		let ord = Object.assign({}, this.state.order);
+		for (let set of this.state.sets) {
+			while (this.chkSet(set, ord)){
+				let tmp_items = {};
+				set.contents.forEach( map => {
+					let c = map.cnt;
+					for (let item of map.items.sort((a, b) => this.price(b) - this.price(a))){  // 値段で降順ソート
+						if(ord[item]){
+							let tmp = Math.min(ord[item], c);
+							c -= tmp;
+							tmp_items[item] = tmp;
+						}
+						if(c<=0) break;
+					}
+				});
+				if (set.price < this.rawTotPrice(tmp_items)) {
+					Object.entries(tmp_items).forEach(([item, cnt]) => {
+						ord[item] -= cnt;
+					});
+					price += set.price;
+				}else break;
+			}
+		}
+		price += this.rawTotPrice(ord);
+		return price - discount;
+/*
+		let raw_price = this.rawPrice(this.state.order);
+		if(this.chkSet(this.state.set, this.state.order)){
 			let ord = Object.assign({}, this.state.order);
 			let set_price = 0;
 			do {
@@ -93,10 +120,15 @@ class CashRegister extends React.Component {
 						if(c<=0) break;
 					}
 				});
-			} while (this.chkSet(ord));
-			set_price += _.sum(Object.entries(ord).map(([id, cnt]) => this.price(id)*cnt));
+			} while (this.chkSet(this.state.set, ord));
+			set_price += this.rawPrice(ord);
 			return Math.min(raw_price, set_price) - discount;
 		}else return raw_price - discount;
+		*/
+	}
+
+	rawTotPrice(order){
+		return _.sum(Object.entries(order).map(([id, cnt]) => this.price(id)*cnt));
 	}
 
 	// メニューから、該当するidのアイテムを探して値段を返す
@@ -115,9 +147,9 @@ class CashRegister extends React.Component {
 		);
 	}
 
-	chkSet(ord){
-		if (!this.state.set) return false;
-		return this.state.set.contents.every( map =>
+	chkSet(set, ord){
+		if (!set) return false;
+		return set.contents.every( map =>
 			_.sum(map.items.map(item => (ord[item] || 0))) >= map.cnt
 		);
 	}
