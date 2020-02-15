@@ -2,3 +2,5 @@ node_modules/
 
 #build dir(webpack)
 static/
+
+auth.js
